@@ -3,15 +3,7 @@ import argparse
 import networkx as nx
 import csv
 
-### Functions for reading GFA and computing graph metrics ###
-
 def read_gfa(gfa_file):
-    """
-    Read the GFA file and separate it into:
-      - S lines (segments)
-      - L lines (links)
-      - Other lines (e.g. headers/comments)
-    """
     s_lines = []
     l_lines = []
     other_lines = []
@@ -27,9 +19,6 @@ def read_gfa(gfa_file):
     return s_lines, l_lines, other_lines
 
 def filter_s_lines(s_lines, removed_set):
-    """
-    Return only S lines whose segment (the second field) is not in removed_set.
-    """
     new_s_lines = []
     for line in s_lines:
         fields = line.split("\t")
@@ -40,10 +29,6 @@ def filter_s_lines(s_lines, removed_set):
     return new_s_lines
 
 def build_graph(s_lines, l_lines):
-    """
-    Build an undirected NetworkX graph using S lines for nodes
-    and L lines for edges.
-    """
     G = nx.Graph()
     for line in s_lines:
         fields = line.split("\t")
@@ -58,19 +43,8 @@ def build_graph(s_lines, l_lines):
             G.add_edge(seg1, seg2)
     return G
 
-### New function: Reconnect segments using the .geese file ordering ###
+### Reconnect segments using the .geese file ordering ###
 def build_links_from_geese(geese_file, removed_set):
-    """
-    Read the .geese file to obtain the order of segments for each sample.
-    For each sample, sort entries by atom_nr (second column) and then filter out any segments
-    whose 'class' is in removed_set. For each sample, for every pair of consecutive segments,
-    generate a new L line using the segment identifier and strand.
-
-    The .geese file is expected to have a header:
-       #name	atom_nr	class	strand	start	end
-
-    Returns a list of new L lines.
-    """
     # Dictionary: sample -> list of tuples (atom_nr, class, strand)
     sample_order = {}
     with open(geese_file, 'r') as f:

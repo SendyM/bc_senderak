@@ -5,9 +5,6 @@ import csv
 import sys
 
 def read_gfa(gfa_file):
-    """
-    Read the GFA file and separate S lines (segments) and L lines (links).
-    """
     s_lines = []
     l_lines = []
     with open(gfa_file, 'r') as f:
@@ -20,18 +17,6 @@ def read_gfa(gfa_file):
     return s_lines, l_lines
 
 def build_graph(s_lines, l_lines):
-    """
-    Build an undirected NetworkX graph using nodes from S lines and
-    edges from L lines.
-    
-    The S lines are assumed to be in the format:
-      S <segment> <sequence> [other tags...]
-      
-    The L lines are assumed to be in the format:
-      L <seg1> <ori1> <seg2> <ori2> <overlap>
-      
-    Duplicate edges are automatically ignored by the Graph.
-    """
     G = nx.Graph()
     # Add nodes from S lines.
     for line in s_lines:
@@ -49,12 +34,6 @@ def build_graph(s_lines, l_lines):
     return G
 
 def compute_metrics(G):
-    """
-    Compute the degree (distinct edges) and betweenness centrality for each node.
-    Returns two dictionaries:
-      - degree_dict: {node: degree}
-      - bc_dict: {node: betweenness_centrality}
-    """
     degree_dict = dict(G.degree())
     bc_dict = nx.betweenness_centrality(G)
     return degree_dict, bc_dict

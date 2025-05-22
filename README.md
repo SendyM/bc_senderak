@@ -1,5 +1,4 @@
-# **bc_senderak**
-# Pangenomic Graph Filtering and Visualization – README
+# **Pangenomic Graph Filtering and Visualization**
 
 Tento projekt obsahuje skripty na filtrovanie pangenomických grafov vytvorených z výstupu nástroja GEESE a ich následnú vizualizáciu pomocou D3.js alebo Bandage.
 

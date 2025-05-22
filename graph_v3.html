@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+  body { margin:0; overflow:hidden; font-family:sans-serif }
+  #controls {
+    position:absolute; top:1em; left:1em;
+    background:rgba(255,255,255,0.9);
+    padding:0.5em; border:1px solid #ccc; border-radius:4px;
+  }
+  #controls label { display:block; font-size:0.9em; margin-bottom:0.4em; }
+  .link { stroke:#999; stroke-opacity:0.8; }
+  .node { stroke:#fff; stroke-width:1.5px; cursor:grab; }
+  .node:active { cursor:grabbing; }
+</style>
+<body>
+  <div id="controls">
+    <label><input type="checkbox" id="heatmap"/> Heatmap by usage</label>
+    <label>Node size: <input id="nodeSize" type="range" min="2" max="200" value="8"/></label>
+    <label>Edge width: <input id="edgeWidth" type="range" min="1" max="100" value="2"/></label>
+    <label>Link distance: <input id="linkDist" type="range" min="20" max="500" value="120"/></label>
+    <label>Collision rad: <input id="collide" type="range" min="0" max="100" value="20"/></label>
+    <label>Charge: <input id="charge" type="range" min="-1000" max="0" value="-80"/></label>
+  </div>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script>
+  const W = innerWidth, H = innerHeight;
+  let nodeR=8, linkW=2, linkD=120, collR=20, charge=-80;
+  let useHeat=false;
+
+  const svg = d3.select('body').append('svg').attr('width',W).attr('height',H);
+  const container = svg.call(d3.zoom()
+    .scaleExtent([0.005,1000])
+    .on('zoom', e=>container.attr('transform',e.transform)))
+    .append('g');
+
+  d3.json('graph.json').then(graph=>{
+    // prepare heatmap scale
+    const usages = graph.nodes.map(d=>d.usageValue||0);
+    const minU = d3.min(usages), maxU = d3.max(usages);
+    const colorHeat = d3.scaleSequential(t => d3.interpolateYlOrRd(0.4 + t * 0.6))
+        .domain([minU, maxU]).clamp(true);
+
+    // simulation
+    const sim = d3.forceSimulation(graph.nodes)
+      .force('link', d3.forceLink(graph.links)
+        .id(d=>d.id).distance(linkD).strength(0.8))
+      .force('charge', d3.forceManyBody().strength(charge))
+      .force('center', d3.forceCenter(W/2,H/2))
+      .force('collision', d3.forceCollide(collR));
+
+    // links
+    const link = container.append('g')
+      .selectAll('line').data(graph.links).join('line')
+      .attr('class','link').style('stroke-width',linkW);
+
+    // nodes
+    const node = container.append('g')
+      .selectAll('circle').data(graph.nodes).join('circle')
+      .attr('class','node').attr('r',nodeR)
+      .style('fill', d=>d.color||'steelblue')
+      .call(d3.drag()
+        .on('start', (e,d)=>{ if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y;})
+        .on('drag',  (e,d)=>{ d.fx=e.x; d.fy=e.y; })
+        .on('end',   (e,d)=>{ if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+      );
+
+    node.append('title').text(d=>`${d.id}\nusage: ${d.usageValue}`);
+
+    sim.on('tick', ()=>{
+      link.attr('x1',d=>d.source.x)
+          .attr('y1',d=>d.source.y)
+          .attr('x2',d=>d.target.x)
+          .attr('y2',d=>d.target.y);
+      node.attr('cx',d=>d.x).attr('cy',d=>d.y);
+    });
+
+    // controls
+    d3.select('#heatmap').on('change', function(){
+      useHeat = this.checked;
+      node.style('fill', d=> useHeat 
+        ? colorHeat(d.usageValue||0)
+        : (d.color||'steelblue'));
+    });
+    d3.select('#nodeSize').on('input', function(){
+      nodeR = +this.value; node.attr('r',nodeR);
+      collR = +d3.select('#collide').node().value;
+      sim.force('collision',d3.forceCollide(collR)); sim.alpha(0.2).restart();
+    });
+    d3.select('#edgeWidth').on('input', function(){
+      linkW = +this.value; link.style('stroke-width',linkW);
+    });
+    d3.select('#linkDist').on('input', function(){
+      linkD = +this.value; sim.force('link').distance(linkD);
+      sim.alpha(0.2).restart();
+    });
+    d3.select('#collide').on('input', function(){
+      collR = +this.value; sim.force('collision',d3.forceCollide(collR));
+      sim.alpha(0.2).restart();
+    });
+    d3.select('#charge').on('input', function(){
+      charge = +this.value; sim.force('charge',d3.forceManyBody().strength(charge));
+      sim.alpha(0.2).restart();
+    });
+  });
+  </script>
+</body>
+</html>

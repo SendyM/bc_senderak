@@ -1,7 +1,7 @@
 # **bc_senderak**
 # Pangenomic Graph Filtering and Visualization – README
 
-Tento projekt obsahuje skripty na filtrovanie pangenomických grafov vytvorených z výstupu nástroja GEESE a ich následnú vizualizáciu pomocou D3.js.
+Tento projekt obsahuje skripty na filtrovanie pangenomických grafov vytvorených z výstupu nástroja GEESE a ich následnú vizualizáciu pomocou D3.js alebo Bandage.
 
 ## Prehľad skriptov
 
@@ -43,21 +43,31 @@ HTML stránka využívajúca D3.js na **interaktívnu vizualizáciu grafu**:
 - úprava veľkosti uzlov a hrán,
 - možnosť zapnúť heatmapu podľa výskytu uzlov (usage).
 
-**Na použitie lokálne spustiť cez HTTP server.**
-
 ---
 
 ## Ako reprodukovať finálny graf
 
-### 1. Spusti filtrovanie `.geese` súboru:
+1. Spusti filtrovanie `.geese` súboru:
 
 ```bash
-python3 filter_geese_iter.py ecol-train-1000.geese ecol-train.fa -o filtered.geese \
-  --min-depth 25 --remove-dup --iterations 4
-
-
-### 1. Spusti filtrovanie `.geese` súboru:
+python3 iterative_geese_filter.py ecol-train-1000.geese ecol-train.fa \
+ -o filtered.geese \
+ --min-depth 25 --remove-dup --iterations 4
+```
+2. Vytvor GFA z filtrovaného `.geese`:
 
 ```bash
-python3 atoms2gfa-2.py tmp.geese ecol-train.fa -o tmp.gfa
+python3 atoms2gfa.py filtered.geese ecol-train.fa -o filtered.gfa
+```
+3. Vyzualizácia pomocou nástroja Bandage:
+```bash
+Bandage load filtered.gfa
+```
 
+3. Vyzualizácia pomocou D3.js:
+```bash
+python3 gfa2json.py filtered.gfa filtered.geese graph.json
+
+#Spusti lokálny HTTP server a otvor vizualizáciu:
+python3 -m http.server 8000
+http://localhost:8000/graph_D3.html

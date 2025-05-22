@@ -1,4 +1,63 @@
 # **bc_senderak**
-## Dokumentácia pre skripty
+# Pangenomic Graph Filtering and Visualization – README
 
-Všetky skripty vyžadujú **Python 3** a väčšina z nich používa knižnicu **NetworkX**.
+Tento projekt obsahuje skripty na filtrovanie pangenomických grafov vytvorených z výstupu nástroja GEESE a ich následnú vizualizáciu pomocou D3.js.
+
+## Prehľad skriptov
+
+### 1. `iterative_geese_filter.py`
+Hlavný skript pre **filtrovanie** `.geese` súboru:
+- kombinuje globálne pravidlá (minimálna hĺbka, dĺžka, duplikáty, unikátne kontexty),
+- iteruje viacnásobne podľa nastavení,
+- následne aplikuje **kontextovo založené čistenie** atómov na základe ich výskytu v rôznych genómoch.
+
+**Výstup:** nový `.geese` súbor s odfiltrovanými atómami.
+
+---
+
+### 2. `atoms2gfa.py`
+Konvertuje `.geese` a FASTA súbor na GFA graf.
+
+**Výstup:** `.gfa` súbor so segmentmi a hranami pripravený na ďalšie spracovanie.
+
+---
+
+### 3. `score_graph.py`
+Porovnáva pôvodný a filtrovaný GFA graf a vypočíta **HI (Hairball Index)**
+
+**Výstup:** textový výstup so štatistikami a skóre (nižšie = lepšie).
+
+---
+
+### 4. `gfa2json.py`
+Prevádza GFA + `.geese` súbor do formátu JSON vhodného na vizualizáciu:
+- každý uzol obsahuje počet genómov, v ktorých sa vyskytuje,
+- farba uzla sa prenáša z GFA.
+
+**Výstup:** `graph.json` súbor pre vizualizáciu.
+
+---
+
+### 5. `graph_D3.html`
+HTML stránka využívajúca D3.js na **interaktívnu vizualizáciu grafu**:
+- úprava veľkosti uzlov a hrán,
+- možnosť zapnúť heatmapu podľa výskytu uzlov (usage).
+
+**Na použitie lokálne spustiť cez HTTP server.**
+
+---
+
+## Ako reprodukovať finálny graf
+
+### 1. Spusti filtrovanie `.geese` súboru:
+
+```bash
+python3 filter_geese_iter.py ecol-train-1000.geese ecol-train.fa -o filtered.geese \
+  --min-depth 25 --remove-dup --iterations 4
+
+
+### 1. Spusti filtrovanie `.geese` súboru:
+
+```bash
+python3 atoms2gfa-2.py tmp.geese ecol-train.fa -o tmp.gfa
+
